@@ -25,7 +25,7 @@ model Account {
   updatedAt          DateTime  @updatedAt
 
   ///it establishes the relation between the Account and the user userId from the ACcount and the id from the User as a reference then when either one of the data is deleted then  we want both to be deleted by onDelete: cascade
-  user User @relation(fields: [userId], references: [id], onDelete: cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, providerAccountId])
 }
@@ -39,7 +39,7 @@ model Session {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationRequest {
@@ -56,12 +56,45 @@ model VerificationRequest {
 ///Define a model User  @id marks this field as primary key cuid() automatically generates the id
 /// emailVerification DateTime? stores data and time when user verify their email
 ///accounts Account[] -> this creates the one to many relationship between the user and account
+
 model User {
-  id String @id @default(cuid())
-  name String?
-  email String? @unique
+  id                String        @id @default(cuid())
+  name              String?
+  email             String?       @unique
   emailVerification DateTime?
-  image String
-  accounts Account[]
-  sessions Session[]
+  image             String
+  accounts          Account[]
+  sessions          Session[]
+  jobs              Job[]         @relation("PostedJobs")
+  application       Application[]
+}
+
+//Job model
+model Job {
+  id          String  @id @default(cuid())
+  title       String
+  companay    String
+  location    String
+  type        String
+  description String  @db.Text
+  salary      String?
+
+  postedAt    DateTime      @default(now()) // create the auto date and time when the job was posted
+  postedBy    User          @relation("PostedJobs", fields: [postedById], references: [id])
+  postedById  String
+  application Application[]
+}
+
+//Application 
+model Application {
+  id        String   @id @default(cuid())
+  jobId     String
+  userId    String
+  status    String   @default("PENDING")
+  appliedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  job  Job  @relation(fields: [jobId], references: [id])
+
+  @@unique([jobId, userId]) //to prevent duplicate applications
 }
