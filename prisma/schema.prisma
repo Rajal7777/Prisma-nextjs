@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                 String    @id @default(cuid())
+  userId             String
+  providerType       String
+  providerId         String
+  providerAccountId  String
+  refreshToken       String?
+  accessToken        String?
+  accessTokenExpires DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  ///it establishes the relation between the Account and the user userId from the ACcount and the id from the User as a reference then when either one of the data is deleted then  we want both to be deleted by onDelete: cascade
+  user User @relation(fields: [userId], references: [id], onDelete: cascade)
+
+  @@unique([providerId, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  expires      DateTime
+  sessionToken String   @unique
+  accessToken  String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: cascade)
+}
+
+model VerificationRequest {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, token])
+}
+
+///Define a model User  @id marks this field as primary key cuid() automatically generates the id
+/// emailVerification DateTime? stores data and time when user verify their email
+///accounts Account[] -> this creates the one to many relationship between the user and account
+model User {
+  id String @id @default(cuid())
+  name String?
+  email String? @unique
+  emailVerification DateTime?
+  image String
+  accounts Account[]
+  sessions Session[]
+}
